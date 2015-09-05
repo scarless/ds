@@ -1,0 +1,121 @@
+package server.model.players.minigames;
+
+import server.Server;
+import server.event.Task;
+import server.model.players.Client;
+import server.model.players.Player;
+import server.model.players.PlayerHandler;
+import server.util.Misc;
+
+public class TriviaBot {
+
+	/**
+	 * The current selected question.
+	 */
+	
+	public static String currentQuestion = null;
+	
+	/**
+	 * The current selected answer.
+	 */
+	
+	public static String currentAnswer = null;
+	
+	/**
+	 * This will hold all of the different variety of questions, and answers
+	 * which the trivia bot could ask in-game.
+	 */
+	
+	public static final String[][] data = {
+		{"What was the first GenerationX server version?", "508"},
+		{"Who is the new owner of GenerationX?", "jony"},
+		{"What is the PK level requirement for Chaotics maul?", "80"},
+		{"What is the most powerful special item in-game?", "korasi"},
+		{"Back in time, what was the biggest player count we ever hit?", "500"},
+		{"Which forum software we are currently using?", "vbulletin"},
+		{"What county is the biggest in the world?", "russia"},
+		{"How much PK points you receive for each kill at mage bank?", "6"}
+	};
+	
+	/**
+	 * An event for the trivia bot, this will announce to the player's the
+	 * current question.
+	 * 
+	 * @param c The Client index.
+	 */
+	
+	public static void triviaBot(Client c) {
+		Server.getTaskScheduler().schedule(new Task(1500){
+			@Override
+			protected void execute() {
+			System.out.println("Trivia Bot sent..");
+				if (currentQuestion != null) {
+					yell("@red@[TRIVIA] " + currentQuestion);
+					return;
+				}
+				assignQuestion();
+			}
+		});
+	}
+	
+	/**
+	 * This will generate a new current answer, and question.
+	 */
+	
+	public static void assignQuestion() {
+		for (int i = 0; i < data.length; i++) {
+			if (Misc.random(i) == i) {
+				currentQuestion = data[i][0];
+				currentAnswer = data[i][1];
+			}
+		}
+		yell("@red@[TRIVIA] " + currentQuestion);
+		yell("@red@If you think you know the answer simply use the command ::answer with the answer");
+		yell("@red@after it");
+	}
+	
+	/**
+	 * It will reset the current question, and answer.
+	 */
+	
+	public static void resetQuestion() {
+		currentAnswer = null;
+		currentQuestion = null;
+	}
+	
+	/**
+	 * This will check whether the player's answer entered is incorrect, or
+	 * correct.
+	 * 
+	 * @param message The player's answer.
+	 */
+	
+	public static void attemptQuestion(Client c, String message) {
+		if (currentQuestion == null) {
+			c.sendMessage("There is no question assigned to the trivia bot..");
+			return;
+		}
+		if (message.equalsIgnoreCase(currentAnswer)) {
+			yell(c.playerName + " entered the correct answer, and received 2 pk points!");
+			c.pkp += 2;
+			resetQuestion();
+		} else {
+			c.sendMessage("The answer entered was incorrect!");
+		}
+	}
+	
+	/**
+	 * Sends a global message to the server.
+	 * 
+	 * @param s The message which is going to be sent.
+	 */
+	
+	public static void yell(String s) {
+		for (Player c : PlayerHandler.players) {
+			if (c != null) {
+				((Client) c).sendMessage(s);
+			}
+		}
+	}
+	
+}
